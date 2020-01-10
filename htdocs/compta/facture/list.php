@@ -148,6 +148,7 @@ $search_array_options=$extrafields->getOptionalsFromPost($object->table_element,
 $fieldstosearchall = array(
 	'f.ref'=>'Ref',
 	'f.ref_client'=>'RefCustomer',
+	'f.note_public'=>'NotePublic',
 	'pd.description'=>'Description',
 	's.nom'=>"ThirdParty",
 	'f.note_public'=>'NotePublic',
@@ -158,6 +159,7 @@ $checkedtypetiers=0;
 $arrayfields=array(
 	'f.ref'=>array('label'=>"Ref", 'checked'=>1),
 	'f.ref_client'=>array('label'=>"RefCustomer", 'checked'=>1),
+	'f.note_public'=>array('label'=>"NotePublic", 'checked'=>1),
 	'f.type'=>array('label'=>"Type", 'checked'=>0),
 	'f.date'=>array('label'=>"DateInvoice", 'checked'=>1),
 	'f.date_lim_reglement'=>array('label'=>"DateDue", 'checked'=>1),
@@ -428,6 +430,7 @@ if ($filtre)
 }
 if ($search_ref) $sql .= natural_search('f.ref', $search_ref);
 if ($search_refcustomer) $sql .= natural_search('f.ref_client', $search_refcustomer);
+if ($search_note_public) $sql .= natural_search('f.note_public', $search_note_public);
 if ($search_type != '' && $search_type != '-1') $sql.=" AND f.type IN (".$db->escape($search_type).")";
 if ($search_project_ref) $sql .= natural_search('p.ref', $search_project_ref);
 if ($search_project) $sql .= natural_search('p.title', $search_project);
@@ -708,6 +711,13 @@ if ($resql)
 		print '<input class="flat maxwidth50imp" type="text" name="search_refcustomer" value="'.dol_escape_htmltag($search_refcustomer).'">';
 		print '</td>';
 	}
+	// Note Public
+	if (! empty($arrayfields['f.note_public']['checked']))
+	{
+		print '<td class="liste_titre" align="left">';
+		print '<input class="flat" type="text" size="6" name="search_note_public" value="'.$search_note_public.'">';
+		print '</td>';
+	}
 	// Type
 	if (! empty($arrayfields['f.type']['checked']))
 	{
@@ -881,6 +891,7 @@ if ($resql)
 	print '<tr class="liste_titre">';
 	if (! empty($arrayfields['f.ref']['checked']))          print_liste_field_titre($arrayfields['f.ref']['label'], $_SERVER['PHP_SELF'], 'f.ref', '', $param, '', $sortfield, $sortorder);
 	if (! empty($arrayfields['f.ref_client']['checked']))         print_liste_field_titre($arrayfields['f.ref_client']['label'], $_SERVER["PHP_SELF"], 'f.ref_client', '', $param, '', $sortfield, $sortorder);
+	if (! empty($arrayfields['f.note_public']['checked']))        print_liste_field_titre($arrayfields['f.note_public']['label'], $_SERVER["PHP_SELF"], 'f.note_public', '', $param, '', $sortfield, $sortorder);
 	if (! empty($arrayfields['f.type']['checked']))               print_liste_field_titre($arrayfields['f.type']['label'], $_SERVER["PHP_SELF"], 'f.type', '', $param, '', $sortfield, $sortorder);
 	if (! empty($arrayfields['f.date']['checked']))               print_liste_field_titre($arrayfields['f.date']['label'], $_SERVER['PHP_SELF'], 'f.datef', '', $param, 'align="center"', $sortfield, $sortorder);
 	if (! empty($arrayfields['f.date_lim_reglement']['checked'])) print_liste_field_titre($arrayfields['f.date_lim_reglement']['label'], $_SERVER['PHP_SELF'], "f.date_lim_reglement", '', $param, 'align="center"', $sortfield, $sortorder);
@@ -1006,6 +1017,15 @@ if ($resql)
 			{
 				print '<td class="nowrap">';
 				print $obj->ref_client;
+				print '</td>';
+				if (! $i) $totalarray['nbfield']++;
+			}
+
+			// Note Public
+			if (! empty($arrayfields['f.note_public']['checked']))
+			{
+				print '<td class="nowrap">';
+				print $obj->note_public;
 				print '</td>';
 				if (! $i) $totalarray['nbfield']++;
 			}

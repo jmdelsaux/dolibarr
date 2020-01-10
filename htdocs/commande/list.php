@@ -118,6 +118,7 @@ $search_array_options=$extrafields->getOptionalsFromPost($object->table_element,
 $fieldstosearchall = array(
 	'c.ref'=>'Ref',
 	'c.ref_client'=>'RefCustomerOrder',
+	'c.note_public'=>'NotePublic',
 	'pd.description'=>'Description',
 	's.nom'=>"ThirdParty",
 	'c.note_public'=>'NotePublic',
@@ -128,6 +129,7 @@ $checkedtypetiers=0;
 $arrayfields=array(
 	'c.ref'=>array('label'=>"Ref", 'checked'=>1),
 	'c.ref_client'=>array('label'=>"RefCustomerOrder", 'checked'=>1),
+	'c.note_public'=>array('label'=>"NotePublic", 'checked'=>1),
     'p.ref'=>array('label'=>"ProjectRef", 'checked'=>1, 'enabled'=>(empty($conf->projet->enabled)?0:1)),
     'p.title'=>array('label'=>"ProjectLabel", 'checked'=>0, 'enabled'=>(empty($conf->projet->enabled)?0:1)),
     's.nom'=>array('label'=>"ThirdParty", 'checked'=>1),
@@ -245,7 +247,7 @@ if ($sall || $search_product_category > 0) $sql = 'SELECT DISTINCT';
 $sql.= ' s.rowid as socid, s.nom as name, s.email, s.town, s.zip, s.fk_pays, s.client, s.code_client,';
 $sql.= " typent.code as typent_code,";
 $sql.= " state.code_departement as state_code, state.nom as state_name,";
-$sql.= ' c.rowid, c.ref, c.total_ht, c.tva as total_tva, c.total_ttc, c.ref_client,';
+$sql.= ' c.rowid, c.ref, c.total_ht, c.tva as total_tva, c.total_ttc, c.ref_client, c.note_public,';
 $sql.= ' c.date_valid, c.date_commande, c.note_private, c.date_livraison as date_delivery, c.fk_statut, c.facture as billed,';
 $sql.= ' c.date_creation as date_creation, c.tms as date_update,';
 $sql.= " p.rowid as project_id, p.ref as project_ref, p.title as project_label";
@@ -595,6 +597,13 @@ if ($resql)
 		print '<input class="flat" type="text" size="6" name="search_ref_customer" value="'.$search_ref_customer.'">';
 		print '</td>';
 	}
+	// Note Public
+	if (! empty($arrayfields['c.note_public']['checked']))
+	{
+		print '<td class="liste_titre" align="left">';
+		print '<input class="flat" type="text" size="6" name="search_note_public" value="'.$search_note_public.'">';
+		print '</td>';
+	}
 	// Project ref
 	if (! empty($arrayfields['p.ref']['checked']))
 	{
@@ -727,6 +736,7 @@ if ($resql)
 	print '<tr class="liste_titre">';
 	if (! empty($arrayfields['c.ref']['checked']))            print_liste_field_titre($arrayfields['c.ref']['label'], $_SERVER["PHP_SELF"], 'c.ref', '', $param, '', $sortfield, $sortorder);
 	if (! empty($arrayfields['c.ref_client']['checked']))     print_liste_field_titre($arrayfields['c.ref_client']['label'], $_SERVER["PHP_SELF"], 'c.ref_client', '', $param, '', $sortfield, $sortorder);
+	if (! empty($arrayfields['c.note_public']['checked']))    print_liste_field_titre($arrayfields['c.note_public']['label'], $_SERVER["PHP_SELF"], 'c.note_public', '', $param, '', $sortfield, $sortorder);
 	if (! empty($arrayfields['p.ref']['checked'])) 	          print_liste_field_titre($arrayfields['p.ref']['label'], $_SERVER["PHP_SELF"], "p.ref", "", $param, '', $sortfield, $sortorder);
 	if (! empty($arrayfields['p.title']['checked'])) 	      print_liste_field_titre($arrayfields['p.title']['label'], $_SERVER["PHP_SELF"], "p.title", "", $param, '', $sortfield, $sortorder);
 	if (! empty($arrayfields['s.nom']['checked']))            print_liste_field_titre($arrayfields['s.nom']['label'], $_SERVER["PHP_SELF"], 's.nom', '', $param, '', $sortfield, $sortorder);
@@ -784,6 +794,7 @@ if ($resql)
 		$generic_commande->date_commande = $db->jdate($obj->date_commande);
 		$generic_commande->date_livraison = $db->jdate($obj->date_delivery);
 		$generic_commande->ref_client = $obj->ref_client;
+		$generic_commande->note_public = $obj->note_public;
 		$generic_commande->total_ht = $obj->total_ht;
 		$generic_commande->total_tva = $obj->total_tva;
 		$generic_commande->total_ttc = $obj->total_ttc;
@@ -940,6 +951,13 @@ if ($resql)
 		if (! empty($arrayfields['c.ref_client']['checked']))
 		{
 			print '<td>'.$obj->ref_client.'</td>';
+			if (! $i) $totalarray['nbfield']++;
+		}
+
+		// Note Public
+		if (! empty($arrayfields['c.note_public']['checked']))
+		{
+			print '<td>'.$obj->note_public.'</td>';
 			if (! $i) $totalarray['nbfield']++;
 		}
 

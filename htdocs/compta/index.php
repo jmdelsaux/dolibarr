@@ -136,7 +136,7 @@ if (! empty($conf->global->MAIN_SEARCH_FORM_ON_HOME_AREAS))     // This is usele
  */
 if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 {
-    $sql = "SELECT f.rowid, f.ref, f.datef as date, f.total as total_ht, f.tva as total_tva, f.total_ttc, f.ref_client";
+    $sql = "SELECT f.rowid, f.ref, f.datef as date, f.total as total_ht, f.tva as total_tva, f.total_ttc, f.ref_client, f.note_public";
     $sql.= ", f.type";
     $sql.= ", s.nom as name";
     $sql.= ", s.rowid as socid, s.email";
@@ -161,18 +161,20 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 
 	if ( $resql )
 	{
+		$total = 0;
 		$num = $db->num_rows($resql);
 
 		print '<table class="noborder" width="100%">';
 		print '<tr class="liste_titre">';
-		print '<th colspan="3">'.$langs->trans("CustomersDraftInvoices").($num?' <span class="badge">'.$num.'</span>':'').'</th></tr>';
+		print '<th colspan="7">'.$langs->trans("CustomersDraftInvoices").($num?' <span class="badge">'.$num.'</span>':'').'</th></tr>';
 		if ($num)
 		{
 			$companystatic=new Societe($db);
 
 			$i = 0;
 			$tot_ttc = 0;
-			while ($i < $num)
+			$nbofloop=min($num, (empty($conf->global->MAIN_MAXLIST_OVERLOAD)?500:$conf->global->MAIN_MAXLIST_OVERLOAD));
+			while ($i < $nbofloop)
 			{
 				$obj = $db->fetch_object($resql);
 
@@ -184,6 +186,7 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 				$facturestatic->total_tva=$obj->total_tva;
 				$facturestatic->total_ttc=$obj->total_ttc;
 				$facturestatic->ref_client=$obj->ref_client;
+				$facturestatic->note_public=$obj->note_public;
 
 				$companystatic->id=$obj->socid;
 				$companystatic->name=$obj->name;
@@ -198,22 +201,38 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 				print $facturestatic->getNomUrl(1, '');
 				print '</td>';
 				print '<td class="nowrap">';
-				print $companystatic->getNomUrl(1, 'customer', 16);
+				print $companystatic->getNomUrl(1, 'customer', 44);
 				print '</td>';
-				print '<td class="nowrap right">'.price($obj->total_ttc).'</td>';
-				print '</tr>';
-				$tot_ttc+=$obj->total_ttc;
-				$i++;
-			}
+				print '<td>'.$facturestatic->ref_client.'</td>';
+				print '<td>'.$facturestatic->note_public.'</td>';
+//				print '<td class="nowrap right">'.price($obj->total_ttc).'</td>';
+//				print '</tr>';
+//				$tot_ttc+=$obj->total_ttc;
 
-			print '<tr class="liste_total"><td class="left">'.$langs->trans("Total").'</td>';
-			print '<td colspan="2" class="right">'.price($tot_ttc).'</td>';
+				print '<td class="right">';
+				print dol_print_date($db->jdate($obj->dp), 'day').'</td>'."\n";
+				if(! empty($conf->global->MAIN_DASHBOARD_USE_TOTAL_HT)) {
+					print '<td class="right">'.price($obj->total_ht).'</td>';
+				}
+				else {
+					print '<td class="right">'.price($obj->total_ttc).'</td>';
+				}
+				print '<td align="center" width="14">'.$facturestatic->LibStatut($obj->fk_statut, $obj->billed, 3).'</td>'."\n";
+				print '</tr>'."\n";
+				$i++;
+				$total += $obj->total_ttc;
+			}
 			print '</tr>';
 		}
-		else
+		if ($num > $nbofloop)
 		{
-			print '<tr class="oddeven"><td colspan="3" class="opacitymedium">'.$langs->trans("NoInvoice").'</td></tr>';
+			print '<tr class="liste_total"><td colspan="7" class="right">'.$langs->trans("XMoreLines", ($num - $nbofloop))."</td></tr>";
 		}
+		elseif ($total>0)
+		{
+			print '<tr class="liste_total"><td colspan="5" class="right">'.$langs->trans("Total")."</td><td class=\"right\">".price($total)."</td><td>&nbsp;</td></tr>";
+		}
+
 		print "</table><br>";
 		$db->free($resql);
 	}
@@ -320,7 +339,7 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 	$langs->load("boxes");
 	$facstatic=new Facture($db);
 
-	$sql = "SELECT f.rowid, f.ref, f.fk_statut, f.type, f.total as total_ht, f.tva as total_tva, f.total_ttc, f.paye, f.tms";
+	$sql = "SELECT f.rowid, f.ref, f.fk_statut, f.type, f.total as total_ht, f.tva as total_tva, f.total_ttc, f.paye, f.tms, f.ref_client, f.note_public";
 	$sql.= ", f.date_lim_reglement as datelimite";
 	$sql.= ", s.nom as name";
     $sql.= ", s.rowid as socid";
@@ -339,7 +358,7 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 	$reshook=$hookmanager->executeHooks('printFieldListWhereCustomerLastModified', $parameters);
 	$sql.=$hookmanager->resPrint;
 
-	$sql.= " GROUP BY f.rowid, f.ref, f.fk_statut, f.type, f.total, f.tva, f.total_ttc, f.paye, f.tms, f.date_lim_reglement,";
+	$sql.= " GROUP BY f.rowid, f.ref, f.fk_statut, f.type, f.total, f.tva, f.total_ttc, f.paye, f.tms, f.ref_client, f.note_public, f.date_lim_reglement,";
 	$sql.= " s.nom, s.rowid, s.code_client, s.code_compta, s.email,";
 	$sql.= " cc.rowid, cc.code";
 	$sql.= " ORDER BY f.tms DESC ";
@@ -353,16 +372,18 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 
         print '<div class="div-table-responsive-no-min">';
 		print '<table class="noborder" width="100%">';
-		print '<tr class="liste_titre"><th colspan="2">'.$langs->trans("BoxTitleLastCustomerBills", $max).'</th>';
+		print '<tr class="liste_titre"><th colspan="4">'.$langs->trans("BoxTitleLastCustomerBills", $max).'</th>';
 		if (! empty($conf->global->MAIN_SHOW_HT_ON_SUMMARY)) print '<th class="right">'.$langs->trans("AmountHT").'</th>';
 		print '<th class="right">'.$langs->trans("AmountTTC").'</th>';
 		print '<th class="right">'.$langs->trans("DateModificationShort").'</th>';
-		print '<th width="16">&nbsp;</th>';
+		print '<th width="18">&nbsp;</th>';
 		print '</tr>';
 		if ($num)
 		{
 			$total_ttc = $totalam = $total = 0;
-			while ($i < $num && $i < $conf->liste_limit)
+			$nbofloop=min($num, (empty($conf->global->MAIN_MAXLIST_OVERLOAD)?500:$conf->global->MAIN_MAXLIST_OVERLOAD));
+			while ($i < $nbofloop)
+//			while ($i < $num && $i < $conf->liste_limit)
 			{
 				$obj = $db->fetch_object($resql);
 
@@ -374,6 +395,8 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 				$facturestatic->statut = $obj->fk_statut;
 				$facturestatic->date_lim_reglement = $db->jdate($obj->datelimite);
 				$facturestatic->type=$obj->type;
+				$facturestatic->ref_client=$obj->ref_client;
+				$facturestatic->note_public=$obj->note_public;
 
 				$thirdpartystatic->id=$obj->socid;
 				$thirdpartystatic->name=$obj->name;
@@ -410,6 +433,9 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 				print '<td class="left">';
                 print $thirdpartystatic->getNomUrl(1, 'customer', 44);
 				print '</td>';
+				print '<td>'.$facturestatic->ref_client.'</td>';
+				print '<td>'.$facturestatic->note_public.'</td>';
+
 				if (! empty($conf->global->MAIN_SHOW_HT_ON_SUMMARY)) print '<td class="nowrap right">'.price($obj->total_ht).'</td>';
 				print '<td class="nowrap right">'.price($obj->total_ttc).'</td>';
 				print '<td class="right">'.dol_print_date($db->jdate($obj->tms), 'day').'</td>';
@@ -425,10 +451,21 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 		}
 		else
 		{
-			$colspan=5;
+			$colspan=7;
 			if (! empty($conf->global->MAIN_SHOW_HT_ON_SUMMARY)) $colspan++;
 			print '<tr class="oddeven"><td colspan="'.$colspan.'" class="opacitymedium">'.$langs->trans("NoInvoice").'</td></tr>';
 		}
+		
+		if ($num > $nbofloop)
+		{
+			print '<tr class="liste_total"><td colspan="7" class="right">'.$langs->trans("XMoreLines", ($num - $nbofloop))."</td></tr>";
+		}
+		elseif ($total>0)
+		{
+			print '<tr class="liste_total"><td colspan="4" class="right">'.$langs->trans("Total")."</td><td class=\"right\">".price($total)."</td><td>&nbsp;</td></td><td>&nbsp;</td></tr>";
+		}
+		print "</table><br>";
+
 		print '</table></div><br>';
 		$db->free($resql);
 	}
@@ -818,7 +855,7 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 {
 	$facstatic=new Facture($db);
 
-	$sql = "SELECT f.rowid, f.ref, f.fk_statut, f.datef, f.type, f.total as total_ht, f.tva as total_tva, f.total_ttc, f.paye, f.tms";
+	$sql = "SELECT f.rowid, f.ref, f.fk_statut, f.datef, f.type, f.total as total_ht, f.tva as total_tva, f.total_ttc, f.paye, f.tms, f.ref_client, f.note_public";
 	$sql.= ", f.date_lim_reglement as datelimite";
 	$sql.= ", s.nom as name";
     $sql.= ", s.rowid as socid, s.email";
@@ -837,7 +874,7 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 	$reshook=$hookmanager->executeHooks('printFieldListWhereCustomerUnpaid', $parameters);
 	$sql.=$hookmanager->resPrint;
 
-	$sql.= " GROUP BY f.rowid, f.ref, f.fk_statut, f.datef, f.type, f.total, f.tva, f.total_ttc, f.paye, f.tms, f.date_lim_reglement,";
+	$sql.= " GROUP BY f.rowid, f.ref, f.fk_statut, f.datef, f.type, f.total, f.tva, f.total_ttc, f.paye, f.tms, f.ref_client, f.note_public, f.date_lim_reglement,";
 	$sql.= " s.nom, s.rowid, s.email, s.code_client, s.code_compta, cc.rowid, cc.code";
 	$sql.= " ORDER BY f.datef ASC, f.ref ASC";
 
@@ -849,12 +886,12 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 
 		print '<div class="div-table-responsive-no-min">';
 		print '<table class="noborder" width="100%">';
-		print '<tr class="liste_titre"><th colspan="2">'.$langs->trans("BillsCustomersUnpaid", $num).' <a href="'.DOL_URL_ROOT.'/compta/facture/list.php?search_status=1"><span class="badge">'.$num.'</span></a></th>';
+		print '<tr class="liste_titre"><th colspan="4">'.$langs->trans("BillsCustomersUnpaid", $num).' <a href="'.DOL_URL_ROOT.'/compta/facture/list.php?search_status=1"><span class="badge">'.$num.'</span></a></th>';
 		print '<th class="right">'.$langs->trans("DateDue").'</th>';
 		if (! empty($conf->global->MAIN_SHOW_HT_ON_SUMMARY)) print '<th class="right">'.$langs->trans("AmountHT").'</th>';
 		print '<th class="right">'.$langs->trans("AmountTTC").'</th>';
 		print '<th class="right">'.$langs->trans("Received").'</th>';
-		print '<th width="16">&nbsp;</th>';
+		print '<th width="18">&nbsp;</th>';
 		print '</tr>';
 		if ($num)
 		{
@@ -872,6 +909,8 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 				$facturestatic->type=$obj->type;
 				$facturestatic->statut = $obj->fk_statut;
 				$facturestatic->date_lim_reglement = $db->jdate($obj->datelimite);
+				$facturestatic->ref_client=$obj->ref_client;
+				$facturestatic->note_public=$obj->note_public;
 
 				$societestatic->id=$obj->socid;
 				$societestatic->name=$obj->name;
@@ -907,6 +946,9 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 				print '<td class="left">' ;
 				print $societestatic->getNomUrl(1, 'customer', 44);
 				print '</td>';
+				print '<td>'.$facturestatic->ref_client.'</td>';
+				print '<td>'.$facturestatic->note_public.'</td>';
+
 				print '<td class="right">'.dol_print_date($db->jdate($obj->datelimite), 'day').'</td>';
 				if (! empty($conf->global->MAIN_SHOW_HT_ON_SUMMARY)) print '<td class="right">'.price($obj->total_ht).'</td>';
 				print '<td class="nowrap right">'.price($obj->total_ttc).'</td>';
@@ -921,7 +963,7 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 				$i++;
 			}
 
-			print '<tr class="liste_total"><td colspan="2">'.$langs->trans("Total").' &nbsp; <font style="font-weight: normal">('.$langs->trans("RemainderToTake").': '.price($total_ttc-$totalam).')</font> </td>';
+			print '<tr class="liste_total"><td colspan="4">'.$langs->trans("Total").' &nbsp; <font style="font-weight: normal">('.$langs->trans("RemainderToTake").': '.price($total_ttc-$totalam).')</font> </td>';
 			print '<td>&nbsp;</td>';
 			if (! empty($conf->global->MAIN_SHOW_HT_ON_SUMMARY)) print '<td class="right">'.price($total).'</td>';
 			print '<td class="nowrap right">'.price($total_ttc).'</td>';
@@ -931,7 +973,7 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 		}
 		else
 		{
-			$colspan=6;
+			$colspan=8;
 			if (! empty($conf->global->MAIN_SHOW_HT_ON_SUMMARY)) $colspan++;
 			print '<tr class="oddeven"><td colspan="'.$colspan.'" class="opacitymedium">'.$langs->trans("NoInvoice").'</td></tr>';
 		}

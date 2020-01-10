@@ -139,7 +139,7 @@ if (! empty($conf->propal->enabled) && $user->rights->propal->lire)
 {
 	$langs->load("propal");
 
-	$sql = "SELECT p.rowid, p.ref, p.ref_client, p.total_ht, p.tva as total_tva, p.total as total_ttc, s.rowid as socid, s.nom as name, s.client, s.canvas";
+	$sql = "SELECT p.rowid, p.ref, p.ref_client, p.note_public, p.total_ht, p.tva as total_tva, p.total as total_ttc, s.rowid as socid, s.nom as name, s.client, s.canvas";
     $sql.= ", s.code_client";
 	$sql.= " FROM ".MAIN_DB_PREFIX."propal as p";
 	$sql.= ", ".MAIN_DB_PREFIX."societe as s";
@@ -159,7 +159,7 @@ if (! empty($conf->propal->enabled) && $user->rights->propal->lire)
 		print '<div class="div-table-responsive-no-min">';
 		print '<table class="noborder" width="100%">';
 		print '<tr class="liste_titre">';
-		print '<th colspan="3">'.$langs->trans("ProposalsDraft").' <a href="'.DOL_URL_ROOT.'/comm/propal/list.php?viewstatut=0"><span class="badge">'.$num.'</span></a></th></tr>';
+		print '<th colspan="5">'.$langs->trans("ProposalsDraft").' <a href="'.DOL_URL_ROOT.'/comm/propal/list.php?viewstatut=0"><span class="badge">'.$num.'</span></a></th></tr>';
 
 		if ($num > 0)
 		{
@@ -173,6 +173,7 @@ if (! empty($conf->propal->enabled) && $user->rights->propal->lire)
 				$propalstatic->id=$obj->rowid;
 				$propalstatic->ref=$obj->ref;
                 $propalstatic->ref_client=$obj->ref_client;
+				$propalstatic->note_public=$obj->note_public;
                 $propalstatic->total_ht = $obj->total_ht;
                 $propalstatic->total_tva = $obj->total_tva;
                 $propalstatic->total_ttc = $obj->total_ttc;
@@ -187,23 +188,25 @@ if (! empty($conf->propal->enabled) && $user->rights->propal->lire)
 				$companystatic->canvas=$obj->canvas;
 				print $companystatic->getNomUrl(1, 'customer', 16);
 				print '</td>';
+				print '<td>'.$orderstatic->ref_client.'</td>';
+				print '<td>'.$orderstatic->note_public.'</td>';
 				print '<td class="nowrap right">'.price($obj->total_ht).'</td></tr>';
 				$i++;
 				$total += $obj->total_ht;
 			}
 			if ($num > $nbofloop)
 			{
-				print '<tr class="liste_total"><td colspan="3" class="right">'.$langs->trans("XMoreLines", ($num - $nbofloop))."</td></tr>";
+				print '<tr class="liste_total"><td colspan="5" class="right">'.$langs->trans("XMoreLines", ($num - $nbofloop))."</td></tr>";
 			}
 			elseif ($total>0)
 			{
-				print '<tr class="liste_total"><td colspan="2" class="right">'.$langs->trans("Total").'</td><td class="right">'.price($total)."</td></tr>";
+				print '<tr class="liste_total"><td colspan="4" class="right">'.$langs->trans("Total").'</td><td class="right">'.price($total)."</td></tr>";
 			}
 		}
 		else
 		{
 
-			print '<tr class="oddeven"><td colspan="3" class="opacitymedium">'.$langs->trans("NoProposal").'</td></tr>';
+			print '<tr class="oddeven"><td colspan="5" class="opacitymedium">'.$langs->trans("NoProposal").'</td></tr>';
 		}
 		print "</table></div><br>";
 
@@ -306,7 +309,7 @@ if (! empty($conf->commande->enabled) && $user->rights->commande->lire)
 {
 	$langs->load("orders");
 
-	$sql = "SELECT c.rowid, c.ref, c.ref_client, c.total_ht, c.tva as total_tva, c.total_ttc, s.rowid as socid, s.nom as name, s.client, s.canvas";
+	$sql = "SELECT c.rowid, c.ref, c.ref_client, c.note_public, c.total_ht, c.tva as total_tva, c.total_ttc, s.rowid as socid, s.nom as name, s.client, s.canvas";
     $sql.= ", s.code_client";
 	$sql.= " FROM ".MAIN_DB_PREFIX."commande as c";
 	$sql.= ", ".MAIN_DB_PREFIX."societe as s";
@@ -326,7 +329,7 @@ if (! empty($conf->commande->enabled) && $user->rights->commande->lire)
 		print '<div class="div-table-responsive-no-min">';
 		print '<table class="noborder" width="100%">';
 		print '<tr class="liste_titre">';
-		print '<th colspan="3">'.$langs->trans("DraftOrders").($num?' <span class="badge">'.$num.'</span>':'').'</th></tr>';
+		print '<th colspan="5">'.$langs->trans("DraftOrders").($num?' <span class="badge">'.$num.'</span>':'').'</th></tr>';
 
 		if ($num > 0)
 		{
@@ -339,6 +342,7 @@ if (! empty($conf->commande->enabled) && $user->rights->commande->lire)
                 $orderstatic->id=$obj->rowid;
                 $orderstatic->ref=$obj->ref;
                 $orderstatic->ref_client=$obj->ref_client;
+				$orderstatic->note_public=$obj->note_public;
                 $orderstatic->total_ht = $obj->total_ht;
                 $orderstatic->total_tva = $obj->total_tva;
                 $orderstatic->total_ttc = $obj->total_ttc;
@@ -351,8 +355,10 @@ if (! empty($conf->commande->enabled) && $user->rights->commande->lire)
                 $companystatic->code_client = $obj->code_client;
                 $companystatic->code_fournisseur = $obj->code_fournisseur;
                 $companystatic->canvas=$obj->canvas;
-				print $companystatic->getNomUrl(1, 'customer', 16);
+				print $companystatic->getNomUrl(1, 'customer', 44);
 				print '</td>';
+				print '<td>'.$orderstatic->ref_client.'</td>';
+				print '<td>'.$orderstatic->note_public.'</td>';
 				if(! empty($conf->global->MAIN_DASHBOARD_USE_TOTAL_HT)) {
 					print '<td class="nowrap right">'.price($obj->total_ht).'</td></tr>';
 				}
@@ -364,17 +370,16 @@ if (! empty($conf->commande->enabled) && $user->rights->commande->lire)
 			}
 			if ($num > $nbofloop)
 			{
-				print '<tr class="liste_total"><td colspan="3" class="right">'.$langs->trans("XMoreLines", ($num - $nbofloop))."</td></tr>";
+				print '<tr class="liste_total"><td colspan="5" class="right">'.$langs->trans("XMoreLines", ($num - $nbofloop))."</td></tr>";
 			}
 			elseif ($total>0)
             {
-                print '<tr class="liste_total"><td class="right">'.$langs->trans("Total").'</td><td colspan="2" class="right">'.price($total)."</td></tr>";
+               print '<tr class="liste_total"><td colspan="4" class="right">'.$langs->trans("Total").'</td><td class="right">'.price($total)."</td></tr>";
 			}
 		}
 		else
 		{
-
-			print '<tr class="oddeven"><td colspan="3" class="opacitymedium">'.$langs->trans("NoOrder").'</td></tr>';
+			print '<tr class="oddeven"><td colspan="5" class="opacitymedium">'.$langs->trans("NoOrder").'</td></tr>';
 		}
 		print "</table>";
 		print "</div><br>";
@@ -796,7 +801,7 @@ if (! empty($conf->commande->enabled) && $user->rights->commande->lire)
 {
 	$langs->load("orders");
 
-	$sql = "SELECT s.nom as name, s.rowid, c.rowid as commandeid, c.total_ttc, c.total_ht, c.tva as total_tva, c.ref, c.ref_client, c.fk_statut, c.date_valid as dv, c.facture as billed";
+	$sql = "SELECT s.nom as name, s.rowid, c.rowid as commandeid, c.total_ttc, c.total_ht, c.tva as total_tva, c.ref, c.ref_client, c.note_public, c.fk_statut, c.date_valid as dv, c.facture as billed";
     $sql.= ", s.code_client";
 	$sql.= " FROM ".MAIN_DB_PREFIX."societe as s";
 	$sql.= ", ".MAIN_DB_PREFIX."commande as c";
@@ -818,7 +823,7 @@ if (! empty($conf->commande->enabled) && $user->rights->commande->lire)
 		{
 			print '<div class="div-table-responsive-no-min">';
 			print '<table class="noborder" width="100%">';
-			print '<tr class="liste_titre"><th class="liste_titre" colspan="5">'.$langs->trans("OrdersOpened").' <a href="'.DOL_URL_ROOT.'/commande/list.php?viewstatut=1"><span class="badge">'.$num.'</span></th></tr>';
+			print '<tr class="liste_titre"><th class="liste_titre" colspan="7">'.$langs->trans("OrdersOpened").' <a href="'.DOL_URL_ROOT.'/commande/list.php?viewstatut=1"><span class="badge">'.$num.'</span></th></tr>';
 
 			$nbofloop=min($num, (empty($conf->global->MAIN_MAXLIST_OVERLOAD)?500:$conf->global->MAIN_MAXLIST_OVERLOAD));
 			while ($i < $nbofloop)
@@ -833,6 +838,7 @@ if (! empty($conf->commande->enabled) && $user->rights->commande->lire)
 				$orderstatic->id=$obj->commandeid;
 				$orderstatic->ref=$obj->ref;
                 $orderstatic->ref_client=$obj->ref_client;
+				$orderstatic->note_public=$obj->note_public;
                 $orderstatic->total_ht = $obj->total_ht;
                 $orderstatic->total_tva = $obj->total_tva;
                 $orderstatic->total_ttc = $obj->total_ttc;
@@ -862,6 +868,8 @@ if (! empty($conf->commande->enabled) && $user->rights->commande->lire)
                 $companystatic->canvas=$obj->canvas;
                 print $companystatic->getNomUrl(1, 'customer', 44);
                 print '</td>';
+				print '<td>'.$orderstatic->ref_client.'</td>';
+				print '<td>'.$orderstatic->note_public.'</td>';
 				print '<td class="right">';
 				print dol_print_date($db->jdate($obj->dp), 'day').'</td>'."\n";
 				if(! empty($conf->global->MAIN_DASHBOARD_USE_TOTAL_HT)) {
@@ -877,11 +885,11 @@ if (! empty($conf->commande->enabled) && $user->rights->commande->lire)
 			}
 			if ($num > $nbofloop)
 			{
-				print '<tr class="liste_total"><td colspan="5" class="right">'.$langs->trans("XMoreLines", ($num - $nbofloop))."</td></tr>";
+				print '<tr class="liste_total"><td colspan="7" class="right">'.$langs->trans("XMoreLines", ($num - $nbofloop))."</td></tr>";
 			}
 			elseif ($total>0)
 			{
-				print '<tr class="liste_total"><td colspan="3" class="right">'.$langs->trans("Total")."</td><td class=\"right\">".price($total)."</td><td>&nbsp;</td></tr>";
+				print '<tr class="liste_total"><td colspan="5" class="right">'.$langs->trans("Total")."</td><td class=\"right\">".price($total)."</td><td>&nbsp;</td></tr>";
 			}
 			print "</table>";
 			print "</div><br>";

@@ -167,7 +167,7 @@ else
  */
 if (! empty($conf->commande->enabled))
 {
-	$sql = "SELECT c.rowid, c.ref, s.nom as name, s.rowid as socid";
+	$sql = "SELECT c.rowid, c.ref, s.nom as name, s.rowid as socid, c.ref_client, c.note_public, c.total_ttc, c.total_ht, c.tva as total_tva";
     $sql.= ", s.client";
     $sql.= ", s.code_client";
     $sql.= ", s.canvas";
@@ -185,20 +185,28 @@ if (! empty($conf->commande->enabled))
 	{
 		print '<table class="noborder" width="100%">';
 		print '<tr class="liste_titre">';
-		print '<th colspan="2">'.$langs->trans("DraftOrders").'</th></tr>';
+		print '<th colspan="7">'.$langs->trans("DraftOrders").'</th></tr>';
 		$langs->load("orders");
+
+		$total = 0;
 		$num = $db->num_rows($resql);
 		if ($num)
 		{
 			$i = 0;
 			$var = true;
-			while ($i < $num)
+			$nbofloop=min($num, (empty($conf->global->MAIN_MAXLIST_OVERLOAD)?500:$conf->global->MAIN_MAXLIST_OVERLOAD));
+			while ($i < $nbofloop)
 			{
 
 				$obj = $db->fetch_object($resql);
 
                 $commandestatic->id=$obj->rowid;
                 $commandestatic->ref=$obj->ref;
+				$commandestatic->ref_client=$obj->ref_client;
+				$commandestatic->note_public=$obj->note_public;
+				$commandestatic->total_ht = $obj->total_ht;
+				$commandestatic->total_tva = $obj->total_tva;
+				$commandestatic->total_ttc = $obj->total_ttc;
 
 				$companystatic->id=$obj->socid;
 				$companystatic->name=$obj->name;
@@ -211,15 +219,32 @@ if (! empty($conf->commande->enabled))
 				print $commandestatic->getNomUrl(1);
                 print "</td>";
                 print '<td class="nowrap">';
-				print $companystatic->getNomUrl(1, 'company', 16);
-                print '</td></tr>';
+				print $companystatic->getNomUrl(1, 'company', 44);
+                print '</td>';
+				print '<td>'.$commandestatic->ref_client.'</td>';
+				print '<td>'.$commandestatic->note_public.'</td>';
+
+				print '<td class="right">';
+				print dol_print_date($db->jdate($obj->dp), 'day').'</td>'."\n";
+				if(! empty($conf->global->MAIN_DASHBOARD_USE_TOTAL_HT)) {
+					print '<td class="right">'.price($obj->total_ht).'</td>';
+				}
+				else {
+					print '<td class="right">'.price($obj->total_ttc).'</td>';
+				}
+				print '<td align="center" width="14">'.$commandestatic->LibStatut($obj->fk_statut, $obj->billed, 3).'</td>'."\n";
+				print '</tr>'."\n";
 				$i++;
+				$total += $obj->total_ttc;
 			}
 		}
-		else
+		if ($num > $nbofloop)
 		{
-
-			print '<tr class="oddeven"><td colspan="3">'.$langs->trans("NoOrder").'</td></tr>';
+			print '<tr class="liste_total"><td colspan="7" class="right">'.$langs->trans("XMoreLines", ($num - $nbofloop))."</td></tr>";
+		}
+		elseif ($total>0)
+		{
+			print '<tr class="liste_total"><td colspan="5" class="right">'.$langs->trans("Total")."</td><td class=\"right\">".price($total)."</td><td>&nbsp;</td></tr>";
 		}
 		print "</table><br>";
 	}
@@ -235,7 +260,7 @@ $max=5;
  * Last modified orders
  */
 
-$sql = "SELECT c.rowid, c.ref, c.fk_statut, c.facture, c.date_cloture as datec, c.tms as datem,";
+$sql = "SELECT c.rowid, c.ref, c.fk_statut, c.facture, c.date_cloture as datec, c.tms as datem, c.ref_client, c.note_public, c.total_ttc, c.total_ht, c.tva as total_tva,";
 $sql.= " s.nom as name, s.rowid as socid";
 $sql.= ", s.client";
 $sql.= ", s.code_client";
@@ -256,14 +281,17 @@ if ($resql)
 {
 	print '<table class="noborder" width="100%">';
 	print '<tr class="liste_titre">';
-	print '<th colspan="4">'.$langs->trans("LastModifiedOrders", $max).'</th></tr>';
+	print '<th colspan="8">'.$langs->trans("LastModifiedOrders", $max).'</th></tr>';
 
+	$total = 0;
 	$num = $db->num_rows($resql);
+
 	if ($num)
 	{
 		$i = 0;
 		$var = true;
-		while ($i < $num)
+		$nbofloop=min($num, (empty($conf->global->MAIN_MAXLIST_OVERLOAD)?500:$conf->global->MAIN_MAXLIST_OVERLOAD));
+		while ($i < $nbofloop)
 		{
 
 			$obj = $db->fetch_object($resql);
@@ -273,6 +301,11 @@ if ($resql)
 
 			$commandestatic->id=$obj->rowid;
 			$commandestatic->ref=$obj->ref;
+			$commandestatic->ref_client=$obj->ref_client;
+			$commandestatic->note_public=$obj->note_public;
+			$commandestatic->total_ht = $obj->total_ht;
+			$commandestatic->total_tva = $obj->total_tva;
+			$commandestatic->total_ttc = $obj->total_ttc;
 
 			$companystatic->id=$obj->socid;
 			$companystatic->name=$obj->name;
@@ -299,13 +332,33 @@ if ($resql)
 			print '</td>';
 
 			print '<td class="nowrap">';
-            print $companystatic->getNomUrl(1, 'company', 16);
+            print $companystatic->getNomUrl(1, 'company', 44);
             print '</td>';
+			print '<td>'.$commandestatic->ref_client.'</td>';
+			print '<td>'.$commandestatic->note_public.'</td>';
 			print '<td>'.dol_print_date($db->jdate($obj->datem), 'day').'</td>';
-			print '<td class="right">'.$commandestatic->LibStatut($obj->fk_statut, $obj->facture, 5).'</td>';
+
+			print '<td class="right">';
+			print dol_print_date($db->jdate($obj->dp), 'day').'</td>'."\n";
+			if(! empty($conf->global->MAIN_DASHBOARD_USE_TOTAL_HT)) {
+				print '<td class="right">'.price($obj->total_ht).'</td>';
+			}
+			else {
+				print '<td class="right">'.price($obj->total_ttc).'</td>';
+			}
+			print '<td align="center" width="14">'.$commandestatic->LibStatut($obj->fk_statut, $obj->billed, 3).'</td>'."\n";
 			print '</tr>';
 			$i++;
+			$total += $obj->total_ttc;
 		}
+	}
+	if ($num > $nbofloop)
+	{
+		print '<tr class="liste_total"><td colspan="8" class="right">'.$langs->trans("XMoreLines", ($num - $nbofloop))."</td></tr>";
+	}
+	elseif ($total>0)
+	{
+		print '<tr class="liste_total"><td colspan="6" class="right">'.$langs->trans("Total")."</td><td class=\"right\">".price($total)."</td><td>&nbsp;</td></tr>";
 	}
 	print "</table><br>";
 }
@@ -317,7 +370,7 @@ else dol_print_error($db);
  */
 if (! empty($conf->commande->enabled))
 {
-	$sql = "SELECT c.rowid, c.ref, c.fk_statut, c.facture, s.nom as name, s.rowid as socid";
+	$sql = "SELECT c.rowid, c.ref, c.fk_statut, c.facture, c.ref_client, c.note_public, c.total_ttc, c.total_ht, c.tva as total_tva, s.nom as name, s.rowid as socid";
     $sql.= ", s.client";
     $sql.= ", s.code_client";
     $sql.= ", s.canvas";
@@ -334,17 +387,19 @@ if (! empty($conf->commande->enabled))
 	$resql=$db->query($sql);
 	if ($resql)
 	{
+		$total = 0;
 		$num = $db->num_rows($resql);
 
 		print '<table class="noborder" width="100%">';
 		print '<tr class="liste_titre">';
-		print '<th colspan="3">'.$langs->trans("OrdersToProcess").' <a href="'.DOL_URL_ROOT.'/commande/list.php?viewstatut=1"><span class="badge">'.$num.'</span></a></th></tr>';
+		print '<th colspan="7">'.$langs->trans("OrdersToProcess").' <a href="'.DOL_URL_ROOT.'/commande/list.php?viewstatut=1"><span class="badge">'.$num.'</span></a></th></tr>';
 
 		if ($num)
 		{
 			$i = 0;
 			$var = true;
-			while ($i < $num)
+			$nbofloop=min($num, (empty($conf->global->MAIN_MAXLIST_OVERLOAD)?500:$conf->global->MAIN_MAXLIST_OVERLOAD));
+			while ($i < $nbofloop)
 			{
 
 				$obj = $db->fetch_object($resql);
@@ -353,6 +408,11 @@ if (! empty($conf->commande->enabled))
 
 				$commandestatic->id=$obj->rowid;
 				$commandestatic->ref=$obj->ref;
+                $commandestatic->ref_client=$obj->ref_client;
+				$commandestatic->note_public=$obj->note_public;
+                $commandestatic->total_ht = $obj->total_ht;
+                $commandestatic->total_tva = $obj->total_tva;
+                $commandestatic->total_ttc = $obj->total_ttc;
 
 				$companystatic->id=$obj->socid;
 				$companystatic->name=$obj->name;
@@ -379,16 +439,34 @@ if (! empty($conf->commande->enabled))
 				print '</td>';
 
 				print '<td class="nowrap">';
-                print $companystatic->getNomUrl(1, 'company', 24);
+                print $companystatic->getNomUrl(1, 'company', 44);
                 print '</td>';
+				print '<td>'.$commandestatic->ref_client.'</td>';
+				print '<td>'.$commandestatic->note_public.'</td>';
 
-				print '<td class="right">'.$commandestatic->LibStatut($obj->fk_statut, $obj->facture, 5).'</td>';
+				print '<td class="right">';
+				print dol_print_date($db->jdate($obj->dp), 'day').'</td>'."\n";
+				if(! empty($conf->global->MAIN_DASHBOARD_USE_TOTAL_HT)) {
+					print '<td class="right">'.price($obj->total_ht).'</td>';
+				}
+				else {
+					print '<td class="right">'.price($obj->total_ttc).'</td>';
+				}
+				print '<td align="center" width="14">'.$commandestatic->LibStatut($obj->fk_statut, $obj->billed, 3).'</td>'."\n";
 
 				print '</tr>';
 				$i++;
+				$total += $obj->total_ttc;
 			}
 		}
-
+		if ($num > $nbofloop)
+		{
+			print '<tr class="liste_total"><td colspan="7" class="right">'.$langs->trans("XMoreLines", ($num - $nbofloop))."</td></tr>";
+		}
+		elseif ($total>0)
+		{
+			print '<tr class="liste_total"><td colspan="5" class="right">'.$langs->trans("Total")."</td><td class=\"right\">".price($total)."</td><td>&nbsp;</td></tr>";
+		}
 		print "</table><br>";
 	}
 	else dol_print_error($db);
@@ -399,7 +477,7 @@ if (! empty($conf->commande->enabled))
  */
 if (! empty($conf->commande->enabled))
 {
-	$sql = "SELECT c.rowid, c.ref, c.fk_statut, c.facture, s.nom as name, s.rowid as socid";
+	$sql = "SELECT c.rowid, c.ref, c.fk_statut, c.facture, c.ref_client, c.note_public, c.total_ttc, c.total_ht, c.tva as total_tva, s.nom as name, s.rowid as socid";
     $sql.= ", s.client";
     $sql.= ", s.code_client";
     $sql.= ", s.canvas";
@@ -416,17 +494,19 @@ if (! empty($conf->commande->enabled))
 	$resql=$db->query($sql);
 	if ($resql)
 	{
+		$total = 0;
 		$num = $db->num_rows($resql);
 
 		print '<table class="noborder" width="100%">';
 		print '<tr class="liste_titre">';
-		print '<th colspan="3">'.$langs->trans("OnProcessOrders").' <a href="'.DOL_URL_ROOT.'/commande/list.php?viewstatut=2"><span class="badge">'.$num.'</span></a></th></tr>';
+		print '<th colspan="7">'.$langs->trans("OnProcessOrders").' <a href="'.DOL_URL_ROOT.'/commande/list.php?viewstatut=2"><span class="badge">'.$num.'</span></a></th></tr>';
 
 		if ($num)
 		{
 			$i = 0;
 			$var = true;
-			while ($i < $num)
+			$nbofloop=min($num, (empty($conf->global->MAIN_MAXLIST_OVERLOAD)?500:$conf->global->MAIN_MAXLIST_OVERLOAD));
+			while ($i < $nbofloop)
 			{
 
 				$obj = $db->fetch_object($resql);
@@ -435,6 +515,11 @@ if (! empty($conf->commande->enabled))
 
 				$commandestatic->id=$obj->rowid;
 				$commandestatic->ref=$obj->ref;
+                $commandestatic->ref_client=$obj->ref_client;
+				$commandestatic->note_public=$obj->note_public;
+                $commandestatic->total_ht = $obj->total_ht;
+                $commandestatic->total_tva = $obj->total_tva;
+                $commandestatic->total_ttc = $obj->total_ttc;
 
 				$companystatic->id=$obj->socid;
 				$companystatic->name=$obj->name;
@@ -461,14 +546,33 @@ if (! empty($conf->commande->enabled))
 				print '</td>';
 
 				print '<td>';
-				print $companystatic->getNomUrl(1, 'company');
+				print $companystatic->getNomUrl(1, 'company', 44);
 				print '</td>';
+				print '<td>'.$commandestatic->ref_client.'</td>';
+				print '<td>'.$commandestatic->note_public.'</td>';
 
-				print '<td class="right">'.$commandestatic->LibStatut($obj->fk_statut, $obj->facture, 5).'</td>';
+				print '<td class="right">';
+				print dol_print_date($db->jdate($obj->dp), 'day').'</td>'."\n";
+				if(! empty($conf->global->MAIN_DASHBOARD_USE_TOTAL_HT)) {
+					print '<td class="right">'.price($obj->total_ht).'</td>';
+				}
+				else {
+					print '<td class="right">'.price($obj->total_ttc).'</td>';
+				}
+				print '<td align="center" width="14">'.$commandestatic->LibStatut($obj->fk_statut, $obj->billed, 3).'</td>'."\n";
 
 				print '</tr>';
 				$i++;
+				$total += $obj->total_ttc;
 			}
+		}
+		if ($num > $nbofloop)
+		{
+			print '<tr class="liste_total"><td colspan="7" class="right">'.$langs->trans("XMoreLines", ($num - $nbofloop))."</td></tr>";
+		}
+		elseif ($total>0)
+		{
+			print '<tr class="liste_total"><td colspan="5" class="right">'.$langs->trans("Total")."</td><td class=\"right\">".price($total)."</td><td>&nbsp;</td></tr>";
 		}
 		print "</table><br>";
 	}
