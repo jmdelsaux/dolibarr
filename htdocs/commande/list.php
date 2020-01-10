@@ -65,6 +65,7 @@ $search_deliveryday=GETPOST("search_deliveryday", "int");
 $search_product_category=GETPOST('search_product_category', 'int');
 $search_ref=GETPOST('search_ref', 'alpha')!=''?GETPOST('search_ref', 'alpha'):GETPOST('sref', 'alpha');
 $search_ref_customer=GETPOST('search_ref_customer', 'alpha');
+$search_note_public=GETPOST('search_note_public', 'alpha');
 $search_company=GETPOST('search_company', 'alpha');
 $search_town=GETPOST('search_town', 'alpha');
 $search_zip=GETPOST('search_zip', 'alpha');
@@ -184,6 +185,7 @@ if (empty($reshook))
 		$search_product_category='';
 		$search_ref='';
 		$search_ref_customer='';
+		$search_note_public='';
 		$search_company='';
 		$search_town='';
 		$search_zip="";
@@ -282,6 +284,7 @@ if ($socid > 0) $sql.= ' AND s.rowid = '.$socid;
 if (!$user->rights->societe->client->voir && !$socid) $sql.= " AND s.rowid = sc.fk_soc AND sc.fk_user = " .$user->id;
 if ($search_ref) $sql .= natural_search('c.ref', $search_ref);
 if ($search_ref_customer) $sql.= natural_search('c.ref_client', $search_ref_customer);
+if ($search_note_public) $sql.= natural_search('c.note_public', $search_note_public);
 if ($sall) $sql .= natural_search(array_keys($fieldstosearchall), $sall);
 if ($billed != '' && $billed >= 0) $sql.=' AND c.facture = '.$billed;
 if ($viewstatut <> '')
@@ -410,6 +413,7 @@ if ($resql)
 	if ($search_ref)      		$param.='&search_ref='.urlencode($search_ref);
 	if ($search_company)  		$param.='&search_company='.urlencode($search_company);
 	if ($search_ref_customer)	$param.='&search_ref_customer='.urlencode($search_ref_customer);
+	if ($search_note_public)	$param.='&search_note_public='.urlencode($search_note_public);
 	if ($search_user > 0) 		$param.='&search_user='.urlencode($search_user);
 	if ($search_sale > 0) 		$param.='&search_sale='.urlencode($search_sale);
 	if ($search_total_ht != '') $param.='&search_total_ht='.urlencode($search_total_ht);

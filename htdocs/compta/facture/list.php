@@ -76,7 +76,8 @@ $lineid=GETPOST('lineid', 'int');
 $userid=GETPOST('userid', 'int');
 $search_product_category=GETPOST('search_product_category', 'int');
 $search_ref=GETPOST('sf_ref')?GETPOST('sf_ref', 'alpha'):GETPOST('search_ref', 'alpha');
-$search_refcustomer=GETPOST('search_refcustomer', 'alpha');
+$search_ref_customer=GETPOST('search_ref_customer', 'alpha');
+$search_note_public=GETPOST('search_note_public', 'alpha');
 $search_type=GETPOST('search_type', 'int');
 $search_project_ref=GETPOST('search_project_ref', 'alpha');
 $search_project=GETPOST('search_project', 'alpha');
@@ -214,7 +215,8 @@ if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter', 
 	$search_sale='';
 	$search_product_category='';
 	$search_ref='';
-	$search_refcustomer='';
+	$search_ref_customer='';
+	$search_note_public='';
 	$search_type='';
 	$search_project_ref='';
 	$search_project='';
@@ -429,7 +431,7 @@ if ($filtre)
 	}
 }
 if ($search_ref) $sql .= natural_search('f.ref', $search_ref);
-if ($search_refcustomer) $sql .= natural_search('f.ref_client', $search_refcustomer);
+if ($search_ref_customer) $sql .= natural_search('f.ref_client', $search_ref_customer);
 if ($search_note_public) $sql .= natural_search('f.note_public', $search_note_public);
 if ($search_type != '' && $search_type != '-1') $sql.=" AND f.type IN (".$db->escape($search_type).")";
 if ($search_project_ref) $sql .= natural_search('p.ref', $search_project_ref);
@@ -560,7 +562,8 @@ if ($resql)
 	if ($search_month_lim)   $param.='&search_month_lim='.urlencode($search_month_lim);
 	if ($search_year_lim)    $param.='&search_year_lim=' .urlencode($search_year_lim);
 	if ($search_ref)         $param.='&search_ref=' .urlencode($search_ref);
-	if ($search_refcustomer) $param.='&search_refcustomer=' .urlencode($search_refcustomer);
+	if ($search_ref_customer) $param.='&search_ref_customer=' .urlencode($search_ref_customer);
+	if ($search_note_public) $param.='&search_note_public=' .urlencode($search_note_public);
 	if ($search_project_ref) $param.='&search_project_ref='.urlencode($search_project_ref);
 	if ($search_project)     $param.='&search_project='.urlencode($search_project);
 	if ($search_type != '')  $param.='&search_type='.urlencode($search_type);
@@ -708,7 +711,7 @@ if ($resql)
 	if (! empty($arrayfields['f.ref_client']['checked']))
 	{
 		print '<td class="liste_titre">';
-		print '<input class="flat maxwidth50imp" type="text" name="search_refcustomer" value="'.dol_escape_htmltag($search_refcustomer).'">';
+		print '<input class="flat maxwidth50imp" type="text" name="search_ref_customer" value="'.dol_escape_htmltag($search_ref_customer).'">';
 		print '</td>';
 	}
 	// Note Public

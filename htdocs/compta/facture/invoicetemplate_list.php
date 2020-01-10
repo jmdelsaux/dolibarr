@@ -65,6 +65,9 @@ $projectid = GETPOST('projectid', 'int');
 
 $search_ref=GETPOST('search_ref');
 $search_societe=GETPOST('search_societe');
+$search_ref_customer=GETPOST('search_ref_customer');
+$search_note_public=GETPOST('search_note_public');
+
 $search_montant_ht=GETPOST('search_montant_ht');
 $search_montant_vat=GETPOST('search_montant_vat');
 $search_montant_ttc=GETPOST('search_montant_ttc');
@@ -117,6 +120,8 @@ $permissiontoedit = $user->rights->facture->creer; // Used by the include of act
 $arrayfields=array(
 	'f.titre'=>array('label'=>$langs->trans("Ref"), 'checked'=>1),
 	's.nom'=>array('label'=>$langs->trans("ThirdParty"), 'checked'=>1),
+	'f.ref_client'=>array('label'=>"RefCustomer", 'checked'=>1),
+	'f.note_public'=>array('label'=>"NotePublic", 'checked'=>1),
 	'f.total'=>array('label'=>$langs->trans("AmountHT"), 'checked'=>1),
 	'f.tva'=>array('label'=>$langs->trans("AmountVAT"), 'checked'=>1),
 	'f.total_ttc'=>array('label'=>$langs->trans("AmountTTC"), 'checked'=>1),
@@ -165,6 +170,8 @@ if (empty($reshook))
 	{
 		$search_ref='';
 		$search_societe='';
+		$search_ref_customer='';
+		$search_note_public='';
 		$search_montant_ht='';
 		$search_montant_vat='';
 		$search_montant_ttc='';
@@ -213,7 +220,7 @@ $today = dol_mktime(23, 59, 59, $tmparray['mon'], $tmparray['mday'], $tmparray['
 /*
  *  List mode
  */
-$sql = "SELECT s.nom as name, s.rowid as socid, f.rowid as facid, f.titre, f.total, f.tva as total_vat, f.total_ttc, f.frequency, f.unit_frequency,";
+$sql = "SELECT s.nom as name, s.rowid as socid, f.rowid as facid, f.titre, f.ref_client, f.note_public, f.total, f.tva as total_vat, f.total_ttc, f.frequency, f.unit_frequency,";
 $sql.= " f.nb_gen_done, f.nb_gen_max, f.date_last_gen, f.date_when, f.suspended,";
 $sql.= " f.datec, f.tms,";
 $sql.= " f.fk_cond_reglement, f.fk_mode_reglement";
@@ -238,6 +245,8 @@ if (! $user->rights->societe->client->voir && ! $socid) {
 }
 if ($search_ref)                  $sql .= natural_search('f.titre', $search_ref);
 if ($search_societe)              $sql .= natural_search('s.nom', $search_societe);
+if ($search_ref_customer)          $sql .= natural_search('f.ref_client', $search_ref_customer);
+if ($search_note_public)          $sql .= natural_search('f.note_public', $search_note_public);
 if ($search_montant_ht != '')     $sql .= natural_search('f.total', $search_montant_ht, 1);
 if ($search_montant_vat != '')    $sql .= natural_search('f.tva', $search_montant_vat, 1);
 if ($search_montant_ttc != '')    $sql .= natural_search('f.total_ttc', $search_montant_ttc, 1);
@@ -313,6 +322,8 @@ if ($resql)
 	if ($search_year_date_when)     $param.='&search_year_date_when=' .urlencode($search_year_date_when);
 	if ($search_ref)                $param.='&search_ref=' .urlencode($search_ref);
 	if ($search_societe)            $param.='&search_societe=' .urlencode($search_societe);
+	if ($search_ref_customer)        $param.='&search_ref_customer=' .urlencode($search_ref_customer);
+	if ($search_note_public)        $param.='&search_note_public=' .urlencode($search_note_public);
 	if ($search_montant_ht != '')   $param.='&search_montant_ht=' .urlencode($search_montant_ht);
 	if ($search_montant_vat != '')  $param.='&search_montant_vat='.urlencode($search_montant_vat);
 	if ($search_montant_ttc != '')  $param.='&search_montant_ttc='.urlencode($search_montant_ttc);
@@ -366,6 +377,20 @@ if ($resql)
 	if (! empty($arrayfields['s.nom']['checked']))
 	{
 		print '<td class="liste_titre left"><input class="flat" type="text" size="8" name="search_societe" value="'.dol_escape_htmltag($search_societe).'"></td>';
+	}
+	// Ref customer
+	if (! empty($arrayfields['f.ref_client']['checked']))
+	{
+		print '<td class="liste_titre">';
+		print '<input class="flat maxwidth50imp" type="text" name="search_ref_customer" value="'.dol_escape_htmltag($search_ref_customer).'">';
+		print '</td>';
+	}
+	// Note Public
+	if (! empty($arrayfields['f.note_public']['checked']))
+	{
+		print '<td class="liste_titre" align="left">';
+		print '<input class="flat" type="text" size="6" name="search_note_public" value="'.$search_note_public.'">';
+		print '</td>';
 	}
 	if (! empty($arrayfields['f.total']['checked']))
 	{
@@ -489,6 +514,8 @@ if ($resql)
 	print '<tr class="liste_titre">';
 	if (! empty($arrayfields['f.titre']['checked']))         print_liste_field_titre($arrayfields['f.titre']['label'], $_SERVER['PHP_SELF'], "f.titre", "", $param, "", $sortfield, $sortorder);
 	if (! empty($arrayfields['s.nom']['checked']))           print_liste_field_titre($arrayfields['s.nom']['label'], $_SERVER['PHP_SELF'], "s.nom", "", $param, "", $sortfield, $sortorder);
+	if (! empty($arrayfields['f.ref_client']['checked']))    print_liste_field_titre($arrayfields['f.ref_client']['label'], $_SERVER["PHP_SELF"], 'f.ref_client', '', $param, '', $sortfield, $sortorder);
+	if (! empty($arrayfields['f.note_public']['checked']))   print_liste_field_titre($arrayfields['f.note_public']['label'], $_SERVER["PHP_SELF"], 'f.note_public', '', $param, '', $sortfield, $sortorder);
 	if (! empty($arrayfields['f.total']['checked']))         print_liste_field_titre($arrayfields['f.total']['label'], $_SERVER['PHP_SELF'], "f.total", "", $param, 'class="right"', $sortfield, $sortorder);
 	if (! empty($arrayfields['f.tva']['checked']))           print_liste_field_titre($arrayfields['f.tva']['label'], $_SERVER['PHP_SELF'], "f.tva", "", $param, 'class="right"', $sortfield, $sortorder);
 	if (! empty($arrayfields['f.total_ttc']['checked']))     print_liste_field_titre($arrayfields['f.total_ttc']['label'], $_SERVER['PHP_SELF'], "f.total_ttc", "", $param, 'class="right"', $sortfield, $sortorder);
@@ -527,6 +554,8 @@ if ($resql)
 			$invoicerectmp->nb_gen_max=$objp->nb_gen_max;
 			$invoicerectmp->nb_gen_done=$objp->nb_gen_done;
 			$invoicerectmp->ref=$objp->titre;
+			$invoicerectmp->ref_client=$objp->ref_client;
+			$invoicerectmp->note_public=$objp->note_public;
 
 			print '<tr class="oddeven">';
 
@@ -543,6 +572,23 @@ if ($resql)
 			   print '<td class="tdoverflowmax200">'.$companystatic->getNomUrl(1, 'customer').'</td>';
 			   if (! $i) $totalarray['nbfield']++;
 			}
+			// Customer ref
+			if (! empty($arrayfields['f.ref_client']['checked']))
+			{
+				print '<td class="nowrap">';
+				print $invoicerectmp->ref_client;
+				print '</td>';
+				if (! $i) $totalarray['nbfield']++;
+			}
+			// Note Public
+			if (! empty($arrayfields['f.note_public']['checked']))
+			{
+				print '<td class="nowrap">';
+				print $invoicerectmp->note_public;
+				print '</td>';
+				if (! $i) $totalarray['nbfield']++;
+			}
+			
 			if (! empty($arrayfields['f.total']['checked']))
 			{
 			   print '<td class="right">'.price($objp->total).'</td>'."\n";
