@@ -182,8 +182,12 @@ $domData .= ' data-product_type="'.$line->product_type.'"';
 		?></td>
 	<?php
 	}
-	// VAT Rate
+	// Description
 	?>
+	<td class="linecoldescription"><?php
+		echo ($line->description);
+	// VAT Rate
+	?></td>
 	<td class="linecolvat nowrap right"><?php $coldisplay++; ?><?php
 	$positiverates='';
 	if (price2num($line->tva_tx))          $positiverates.=($positiverates?'/':'').price2num($line->tva_tx);

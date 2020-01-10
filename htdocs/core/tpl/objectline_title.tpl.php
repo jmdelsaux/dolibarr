@@ -58,6 +58,9 @@ if ($this->element == 'supplier_proposal' || $this->element == 'order_supplier' 
 	print '<td class="linerefsupplier"><span id="title_fourn_ref">'.$langs->trans("SupplierRef").'</span></td>';
 }
 
+// Descrition
+print '<td class="linecoldescription"></td>';
+
 // VAT
 print '<td class="linecolvat right" style="width: 80px">'.$langs->trans('VAT').'</td>';
 

@@ -68,7 +68,7 @@ $coldisplay=0;
 
 	$coldisplay++;
 	?>
-	<td>
+	<td colspan="2">
 	<div id="line_<?php echo $line->id; ?>"></div>
 
 	<input type="hidden" name="lineid" value="<?php echo $line->id; ?>">

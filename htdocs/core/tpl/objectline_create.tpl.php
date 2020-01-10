@@ -171,7 +171,7 @@ if ($nolinesbefore) {
 
     $coldisplay++;
     ?>
-	<td class="nobottom linecoldescription minwidth500imp">
+	<td class="nobottom linecoldescription minwidth500imp" colspan="2">
 
 	<?php
 
