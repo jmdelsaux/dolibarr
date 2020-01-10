@@ -219,6 +219,22 @@ if (empty($reshook))
 					$object->origin_id = $contractidid;
 					$object->linked_objects[$object->origin] = $object->origin_id;
 				}
+
+				// RefCustomer - ref_client
+				if (!empty($conf->global->MAIN_KEEP_REF_CUSTOMER_ON_CLONING)) $object->ref_client = $srcObject->ref_client;
+
+				// Add the linked command
+				if (!empty($conf->global->MAIN_KEEP_ATTACHED_OBJECTS_ON_CLONING)) {
+					if (! empty($srcObject->linkedObjectsIds['commande']))
+					{
+						$commandeidid = reset($srcObject->linkedObjectsIds['commande']);
+
+						$object->origin = 'commande';
+						$object->origin_id = $commandeidid;
+						$object->linked_objects[$object->origin] = $object->origin_id;
+					}
+				}
+
 			}
 
 			$db->begin();
@@ -1231,8 +1247,12 @@ else
 
 		$morehtmlref.='<div class="refidno">';
 		// Ref customer
-		//$morehtmlref.=$form->editfieldkey("RefCustomer", 'ref_client', $object->ref_client, $object, $user->rights->facture->creer, 'string', '', 0, 1);
-		//$morehtmlref.=$form->editfieldval("RefCustomer", 'ref_client', $object->ref_client, $object, $user->rights->facture->creer, 'string', '', null, null, '', 1);
+		if (!empty($conf->global->MAIN_SHOW_PUBLIC_NOTE_ON_CARD)) {
+			$morehtmlref.=$form->editfieldkey("RefCustomer", 'ref_client', $object->ref_client, $object, $user->rights->facture->creer, 'string', '', 0, 1);
+			$morehtmlref.=$form->editfieldval("RefCustomer", 'ref_client', $object->ref_client, $object, $user->rights->facture->creer, 'string', '', null, null, '', 1);
+			$morehtmlref.='<br/>';
+		}
+
 		// Thirdparty
 		$morehtmlref.=$langs->trans('ThirdParty') . ' : ' . $object->thirdparty->getNomUrl(1);
 		// Project
@@ -1267,6 +1287,14 @@ else
 				}
 			}
 		}
+		// Public note
+		if (!empty($conf->global->MAIN_SHOW_PUBLIC_NOTE_ON_CARD))
+		{
+			$morehtmlref.='<br/>';
+			$morehtmlref.=$form->editfieldkey("NotePublic", 'note_public', $object->note_public, $object, $user->rights->facture->creer, 'string', '', 0, 1);
+			$morehtmlref.=$form->editfieldval("NotePublic", 'note_public', $object->note_public, $object, $user->rights->facture->creer, 'string', '', null, null, '', 1);
+		}
+		
 		$morehtmlref.='</div>';
 
 		dol_banner_tab($object, 'ref', $linkback, 1, 'titre', 'none', $morehtmlref, '', 0, '', $morehtmlright);

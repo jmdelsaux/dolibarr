@@ -3760,6 +3760,15 @@ elseif ($id > 0 || ! empty($ref))
 			}
 		}
 	}
+
+	// Public note
+	if (!empty($conf->global->MAIN_SHOW_PUBLIC_NOTE_ON_CARD))
+	{
+		$morehtmlref.='<br/>';
+		$morehtmlref.=$form->editfieldkey("NotePublic", 'note_public', $object->note_public, $object, $usercancreate, 'string', '', 0, 1);
+		$morehtmlref.=$form->editfieldval("NotePublic", 'note_public', $object->note_public, $object, $usercancreate, 'string', '', null, null, '', 1);
+	}
+
 	$morehtmlref.='</div>';
 
 	$object->totalpaye = $totalpaye;   // To give a chance to dol_banner_tab to use already paid amount to show correct status

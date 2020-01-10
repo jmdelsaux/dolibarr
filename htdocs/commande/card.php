@@ -2106,6 +2106,15 @@ if ($action == 'create' && $user->rights->commande->creer)
 				}
 			}
 		}
+
+		// Public note
+		if (!empty($conf->global->MAIN_SHOW_PUBLIC_NOTE_ON_CARD))
+		{
+			$morehtmlref.='<br/>';
+			$morehtmlref.=$form->editfieldkey("NotePublic", 'note_public', $object->note_public, $object, $user->rights->commande->creer, 'string', '', 0, 1);
+			$morehtmlref.=$form->editfieldval("NotePublic", 'note_public', $object->note_public, $object, $user->rights->commande->creer, 'string', '', null, null, '', 1);
+		}
+
 		$morehtmlref.='</div>';
 
 

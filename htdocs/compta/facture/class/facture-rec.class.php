@@ -153,6 +153,7 @@ class FactureRec extends CommonInvoice
 
 			$sql = "INSERT INTO ".MAIN_DB_PREFIX."facture_rec (";
 			$sql.= "titre";
+			if (!empty($conf->global->MAIN_KEEP_REF_CUSTOMER_ON_CLONING)) $sql.= ", ref_client";
 			$sql.= ", fk_soc";
 			$sql.= ", entity";
 			$sql.= ", datec";
@@ -181,6 +182,7 @@ class FactureRec extends CommonInvoice
 			$sql.= ", suspended";
 			$sql.= ") VALUES (";
 			$sql.= "'".$this->db->escape($this->titre)."'";
+			if (!empty($conf->global->MAIN_KEEP_REF_CUSTOMER_ON_CLONING)) $sql.= ", ".($this->ref_client?"'".$this->db->escape($this->ref_client)."'":"null");
 			$sql.= ", ".$facsrc->socid;
 			$sql.= ", ".$conf->entity;
 			$sql.= ", '".$this->db->idate($now)."'";
@@ -388,6 +390,7 @@ class FactureRec extends CommonInvoice
         $sql.= ", f.fk_multicurrency, f.multicurrency_code, f.multicurrency_tx, f.multicurrency_total_ht, f.multicurrency_total_tva, f.multicurrency_total_ttc";
         $sql.= ', p.code as mode_reglement_code, p.libelle as mode_reglement_libelle';
 		$sql.= ', c.code as cond_reglement_code, c.libelle as cond_reglement_libelle, c.libelle_facture as cond_reglement_libelle_doc';
+		if (!empty($conf->global->MAIN_KEEP_REF_CUSTOMER_ON_CLONING)) $sql.= ', f.ref_client';
 		//$sql.= ', el.fk_source';
 		$sql.= ' FROM '.MAIN_DB_PREFIX.'facture_rec as f';
 		$sql.= ' LEFT JOIN '.MAIN_DB_PREFIX.'c_payment_term as c ON f.fk_cond_reglement = c.rowid';

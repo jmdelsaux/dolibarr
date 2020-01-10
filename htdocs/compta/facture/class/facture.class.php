@@ -984,6 +984,8 @@ class Facture extends CommonInvoice
 
 		$object->fetch($fromid);
 
+		if (!empty($conf->global->MAIN_KEEP_ATTACHED_OBJECTS_ON_CLONING)) $object->fetchObjectLinked();
+
 		// Change socid if needed
 		if (! empty($this->socid) && $this->socid != $object->socid)
 		{
@@ -1012,7 +1014,7 @@ class Facture extends CommonInvoice
 		$object->date_creation      = '';
 		$object->date_modification = '';
 		$object->date_validation    = '';
-		$object->ref_client         = '';
+		if (empty($conf->global->MAIN_KEEP_REF_CUSTOMER_ON_CLONING)) $this->ref_client = '';
 		$object->close_code         = '';
 		$object->close_note         = '';
 		$object->products = $object->lines;	        // For backward compatibility
