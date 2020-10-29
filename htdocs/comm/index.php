@@ -328,7 +328,7 @@ if (! empty($conf->commande->enabled) && $user->rights->commande->lire)
 
 		print '<div class="div-table-responsive-no-min">';
 		print '<table class="noborder" width="100%">';
-		print '<tr class="liste_titre">';
+		print '<tr class="liste_titre" style="background-color:#009ee2">';
 		print '<th colspan="5">'.$langs->trans("DraftOrders").($num?' <span class="badge">'.$num.'</span>':'').'</th></tr>';
 
 		if ($num > 0)

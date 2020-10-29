@@ -53,7 +53,8 @@ class box_factures_imp_o2xp extends ModeleBoxes
 	{
 		global $conf, $user, $langs, $db;
 
-		$this->max=$max;
+		//$this->max=$max;
+		$this->max=20;
 
 		include_once DOL_DOCUMENT_ROOT.'/compta/facture/class/facture.class.php';
         include_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
@@ -61,7 +62,8 @@ class box_factures_imp_o2xp extends ModeleBoxes
         $facturestatic = new Facture($db);
         $societestatic = new Societe($db);
 
-		$this->info_box_head = array('text' => $langs->trans("BoxTitleOldestUnpaidCustomerBills", $max));
+		//$this->info_box_head = array('text' => $langs->trans("BoxTitleOldestUnpaidCustomerBills", $max));
+		//$this->info_box_head = array('text' => $langs->trans("BoxTitleOldestUnpaidCustomerBills", $this->max));
 
 		if ($user->rights->facture->lire)
 		{
@@ -90,14 +92,18 @@ class box_factures_imp_o2xp extends ModeleBoxes
 			$sql.= " GROUP BY s.nom, s.rowid, s.code_client, s.logo, f.ref, f.date_lim_reglement,";
 			$sql.= " f.type, f.amount, f.datef, f.total, f.tva, f.total_ttc, f.paye, f.fk_statut, f.rowid";
 			//$sql.= " ORDER BY f.datef DESC, f.ref DESC ";
-			$sql.= " ORDER BY datelimite ASC, f.ref ASC ";
-			$sql.= $db->plimit($max, 0);
+//			$sql.= " ORDER BY datelimite ASC, f.ref ASC ";
+			$sql.= " ORDER BY datelimite DESC, f.ref DESC ";
+//			$sql.= $db->plimit($max, 0);
+			$sql.= $db->plimit($this->max, 0);
 
 			$result = $db->query($sql);
 			if ($result)
 			{
 				$num = $db->num_rows($result);
 				$now=dol_now();
+				
+				$this->info_box_head = array('text' => $langs->trans("BoxTitleOldestUnpaidCustomerBills", $num));
 
 				$line = 0;
 				$l_due_date = $langs->trans('Late').' ('.strtolower($langs->trans('DateDue')).': %s)';
@@ -159,6 +165,12 @@ class box_factures_imp_o2xp extends ModeleBoxes
                         'text' => price($objp->total_ht, 0, $langs, 0, -1, -1, $conf->currency),
                     );
 
+					// P06605
+                    $this->info_box_contents[$line][] = array(
+                        'td' => 'class="nowrap right"',
+                        'text' => price($objp->total_ttc, 0, $langs, 0, -1, -1, $conf->currency),
+                    );
+
                     $this->info_box_contents[$line][] = array(
                         'td' => 'class="right"',
                         'text' => dol_print_date($datelimite, 'day'),
@@ -203,6 +215,6 @@ class box_factures_imp_o2xp extends ModeleBoxes
 	 */
     public function showBox($head = null, $contents = null, $nooutput = 0)
     {
-		return parent::showBox($this->info_box_head, $this->info_box_contents, $nooutput);
+		return parent::showBoxx($this->info_box_head, $this->info_box_contents, $nooutput, 'style="background-color:#ed4635"');
 	}
 }

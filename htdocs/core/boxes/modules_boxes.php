@@ -206,6 +206,12 @@ class ModeleBoxes // Can't be abtract as it is instantiated to build "empty" box
 	 */
 	public function showBox($head = null, $contents = null, $nooutput = 0)
 	{
+		$this-> showBoxx($head, $contents, $nooutput);
+		
+		return '';
+	}
+	public function showBoxx($head = null, $contents = null, $nooutput = 0, $headerstyle = null)
+	{
 		global $langs, $user, $conf;
 
 		if (! empty($this->hidden)) return '\n<!-- Box ".get_class($this)." hidden -->\n';    // Nothing done if hidden (for example when user has no permission)
@@ -241,7 +247,9 @@ class ModeleBoxes // Can't be abtract as it is instantiated to build "empty" box
             // Show box title
             if (! empty($head['text']) || ! empty($head['sublink']) || ! empty($head['subpicto']))
             {
-                $out.= '<tr class="liste_titre box_titre">';
+//                $out.= '<tr class="liste_titre box_titre">';
+				$out.= '<tr class="liste_titre box_titre" '.$headerstyle.'>';
+//				$out.= '<tr class="liste_titre box_titre" style="background-color:#ed4635">';//P06605
                 $out.= '<td';
                 if ($nbcol > 0) { $out.= ' colspan="'.$nbcol.'"'; }
                 $out.= '>';

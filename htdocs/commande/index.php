@@ -184,7 +184,7 @@ if (! empty($conf->commande->enabled))
 	if ($resql)
 	{
 		print '<table class="noborder" width="100%">';
-		print '<tr class="liste_titre">';
+		print '<tr class="liste_titre" style="background-color:#009ee2">';
 		print '<th colspan="7">'.$langs->trans("DraftOrders").'</th></tr>';
 		$langs->load("orders");
 

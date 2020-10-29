@@ -445,6 +445,7 @@ if (! empty($conf->contrat->enabled) && $user->rights->contrat->lire)
 	// Number of active services (expired)
 	$dashboardlines[] = $board->load_board($user, "active");
 }
+
 // Number of invoices customers (has paid)
 if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 {

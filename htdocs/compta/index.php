@@ -131,6 +131,147 @@ if (! empty($conf->global->MAIN_SEARCH_FORM_ON_HOME_AREAS))     // This is usele
 }
 
 
+/*
+ * Unpaid customers invoices
+ */
+if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
+{
+	$facstatic=new Facture($db);
+
+	$sql = "SELECT f.rowid, f.ref, f.fk_statut, f.datef, f.type, f.total as total_ht, f.tva as total_tva, f.total_ttc, f.paye, f.tms, f.ref_client, f.note_public";
+	$sql.= ", f.date_lim_reglement as datelimite";
+	$sql.= ", s.nom as name";
+    $sql.= ", s.rowid as socid, s.email";
+    $sql.= ", s.code_client, s.code_compta";
+    $sql.= ", cc.rowid as country_id, cc.code as country_code";
+    $sql.= ", sum(pf.amount) as am";
+	$sql.= " FROM ".MAIN_DB_PREFIX."societe as s LEFT JOIN ".MAIN_DB_PREFIX."c_country as cc ON cc.rowid = s.fk_pays,".MAIN_DB_PREFIX."facture as f";
+	$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."paiement_facture as pf on f.rowid=pf.fk_facture";
+	if (!$user->rights->societe->client->voir && !$socid) $sql.= ", ".MAIN_DB_PREFIX."societe_commerciaux as sc";
+	$sql.= " WHERE s.rowid = f.fk_soc AND f.paye = 0 AND f.fk_statut = 1";
+	$sql.= " AND f.entity IN (".getEntity('invoice').')';
+	if (!$user->rights->societe->client->voir && !$socid) $sql.= " AND s.rowid = sc.fk_soc AND sc.fk_user = " .$user->id;
+	if ($socid) $sql.= " AND f.fk_soc = ".$socid;
+	// Add where from hooks
+	$parameters=array();
+	$reshook=$hookmanager->executeHooks('printFieldListWhereCustomerUnpaid', $parameters);
+	$sql.=$hookmanager->resPrint;
+
+	$sql.= " GROUP BY f.rowid, f.ref, f.fk_statut, f.datef, f.type, f.total, f.tva, f.total_ttc, f.paye, f.tms, f.ref_client, f.note_public, f.date_lim_reglement,";
+	$sql.= " s.nom, s.rowid, s.email, s.code_client, s.code_compta, cc.rowid, cc.code";
+//	$sql.= " ORDER BY f.datef ASC, f.ref ASC";
+	$sql.= " ORDER BY f.datef DESC, f.ref DESC ";
+
+
+	$resql = $db->query($sql);
+	if ($resql)
+	{
+		$num = $db->num_rows($resql);
+		$i = 0;
+
+		print '<div class="div-table-responsive-no-min">';
+		print '<table class="noborder" width="100%">';
+		print '<tr class="liste_titre" style="background-color:#ed4635"><th colspan="4">'.$langs->trans("BillsCustomersUnpaid", $num).' <a href="'.DOL_URL_ROOT.'/compta/facture/list.php?search_status=1"><span class="badge">'.$num.'</span></a></th>';
+		print '<th class="right">'.$langs->trans("DateDue").'</th>';
+		if (! empty($conf->global->MAIN_SHOW_HT_ON_SUMMARY)) print '<th class="right">'.$langs->trans("AmountHT").'</th>';
+		print '<th class="right">'.$langs->trans("AmountTTC").'</th>';
+		print '<th class="right">'.$langs->trans("Received").'</th>';
+		print '<th width="18">&nbsp;</th>';
+		print '</tr>';
+		if ($num)
+		{
+			$societestatic = new Societe($db);
+			$total_ttc = $totalam = $total = 0;
+			while ($i < $num && $i < $conf->liste_limit)
+			{
+				$obj = $db->fetch_object($resql);
+
+				$facturestatic->ref=$obj->ref;
+				$facturestatic->id=$obj->rowid;
+				$facturestatic->total_ht=$obj->total_ht;
+				$facturestatic->total_tva=$obj->total_tva;
+				$facturestatic->total_ttc=$obj->total_ttc;
+				$facturestatic->type=$obj->type;
+				$facturestatic->statut = $obj->fk_statut;
+				$facturestatic->date_lim_reglement = $db->jdate($obj->datelimite);
+				$facturestatic->ref_client=$obj->ref_client;
+				$facturestatic->note_public=$obj->note_public;
+
+				$societestatic->id=$obj->socid;
+				$societestatic->name=$obj->name;
+				$societestatic->email=$obj->email;
+				$societestatic->country_id=$obj->country_id;
+				$societestatic->country_code=$obj->country_code;
+				$societestatic->client=1;
+				$societestatic->code_client = $obj->code_client;
+				$societestatic->code_fournisseur = $obj->code_fournisseur;
+				$societestatic->code_compta = $obj->code_compta;
+				$societestatic->code_compta_fournisseur = $obj->code_compta_fournisseur;
+
+				print '<tr class="oddeven">';
+				print '<td class="nowrap">';
+
+				print '<table class="nobordernopadding"><tr class="nocellnopadd">';
+				print '<td width="110" class="nobordernopadding nowrap">';
+				print $facturestatic->getNomUrl(1, '');
+				print '</td>';
+				print '<td width="20" class="nobordernopadding nowrap">';
+				if ($facturestatic->hasDelay()) {
+					print img_warning($langs->trans("Late"));
+				}
+				print '</td>';
+				print '<td width="16" class="nobordernopadding hideonsmartphone right">';
+				$filename=dol_sanitizeFileName($obj->ref);
+				$filedir=$conf->facture->dir_output . '/' . dol_sanitizeFileName($obj->ref);
+				$urlsource=$_SERVER['PHP_SELF'].'?facid='.$obj->rowid;
+				print $formfile->getDocumentsLink($facturestatic->element, $filename, $filedir);
+				print '</td></tr></table>';
+
+				print '</td>';
+				print '<td class="left">' ;
+				print $societestatic->getNomUrl(1, 'customer', 44);
+				print '</td>';
+				print '<td>'.$facturestatic->ref_client.'</td>';
+				print '<td>'.$facturestatic->note_public.'</td>';
+
+				print '<td class="right">'.dol_print_date($db->jdate($obj->datelimite), 'day').'</td>';
+				if (! empty($conf->global->MAIN_SHOW_HT_ON_SUMMARY)) print '<td class="right">'.price($obj->total_ht).'</td>';
+				print '<td class="nowrap right">'.price($obj->total_ttc).'</td>';
+				print '<td class="nowrap right">'.price($obj->am).'</td>';
+				print '<td>'.$facstatic->LibStatut($obj->paye, $obj->fk_statut, 3, $obj->am).'</td>';
+				print '</tr>';
+
+				$total_ttc +=  $obj->total_ttc;
+				$total += $obj->total_ht;
+				$totalam +=  $obj->am;
+
+				$i++;
+			}
+
+			print '<tr class="liste_total"><td colspan="4">'.$langs->trans("Total").' &nbsp; <font style="font-weight: normal">('.$langs->trans("RemainderToTake").': '.price($total_ttc-$totalam).')</font> </td>';
+			print '<td>&nbsp;</td>';
+			if (! empty($conf->global->MAIN_SHOW_HT_ON_SUMMARY)) print '<td class="right">'.price($total).'</td>';
+			print '<td class="nowrap right">'.price($total_ttc).'</td>';
+			print '<td class="nowrap right">'.price($totalam).'</td>';
+			print '<td>&nbsp;</td>';
+			print '</tr>';
+		}
+		else
+		{
+			$colspan=8;
+			if (! empty($conf->global->MAIN_SHOW_HT_ON_SUMMARY)) $colspan++;
+			print '<tr class="oddeven"><td colspan="'.$colspan.'" class="opacitymedium">'.$langs->trans("NoInvoice").'</td></tr>';
+		}
+		print '</table></div><br>';
+		$db->free($resql);
+	}
+	else
+	{
+		dol_print_error($db);
+	}
+}
+
+
 /**
  * Draft customers invoices
  */
@@ -152,6 +293,9 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 	{
 		$sql .= " AND f.fk_soc = $socid";
 	}
+
+	$sql.= " ORDER BY f.datef DESC, f.ref DESC ";
+	
 	// Add where from hooks
 	$parameters=array();
 	$reshook=$hookmanager->executeHooks('printFieldListWhereCustomerDraft', $parameters);
@@ -164,8 +308,9 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 		$total = 0;
 		$num = $db->num_rows($resql);
 
+		print '<div class="div-table-responsive-no-min">';
 		print '<table class="noborder" width="100%">';
-		print '<tr class="liste_titre">';
+		print '<tr class="liste_titre" style="background-color:#009ee2">';
 		print '<th colspan="7">'.$langs->trans("CustomersDraftInvoices").($num?' <span class="badge">'.$num.'</span>':'').'</th></tr>';
 		if ($num)
 		{
@@ -233,7 +378,7 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 			print '<tr class="liste_total"><td colspan="5" class="right">'.$langs->trans("Total")."</td><td class=\"right\">".price($total)."</td><td>&nbsp;</td></tr>";
 		}
 
-		print "</table><br>";
+		print "</table></div><br>";
 		$db->free($resql);
 	}
 	else
@@ -268,6 +413,7 @@ if (! empty($conf->fournisseur->enabled) && $user->rights->fournisseur->facture-
 	{
 		$num = $db->num_rows($resql);
 
+		print '<div class="div-table-responsive-no-min">';
 		print '<table class="noborder" width="100%">';
 		print '<tr class="liste_titre">';
 		print '<th colspan="3">'.$langs->trans("SuppliersDraftInvoices").($num?' <span class="badge">'.$num.'</span>':'').'</th></tr>';
@@ -320,7 +466,7 @@ if (! empty($conf->fournisseur->enabled) && $user->rights->fournisseur->facture-
 		{
 			print '<tr class="oddeven"><td colspan="3" class="opacitymedium">'.$langs->trans("NoInvoice").'</td></tr>';
 		}
-		print "</table><br>";
+		print "</table></div><br>";
 		$db->free($resql);
 	}
 	else
@@ -462,9 +608,15 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 		}
 		elseif ($total>0)
 		{
-			print '<tr class="liste_total"><td colspan="4" class="right">'.$langs->trans("Total")."</td><td class=\"right\">".price($total)."</td><td>&nbsp;</td></td><td>&nbsp;</td></tr>";
+//			print '<tr class="liste_total"><td colspan="4" class="right">'.$langs->trans("Total")."</td><td class=\"right\">".price($total)."</td><td>&nbsp;</td></td><td>&nbsp;</td></tr>";
+			print '<tr class="liste_total"><td colspan="2">'.$langs->trans("Total").'&nbsp;<font style="font-weight: normal">EUR &nbsp;('.price($total).')</font> </td>';
+			if (! empty($conf->global->MAIN_SHOW_HT_ON_SUMMARY)) print '<td class="right">'.price($tot_ht).'</td>';
+			print '<td>&nbsp;</td></td><td>&nbsp;</td>';
+			print '<td class="nowrap right">'.price($total).'</td>';
+			print '</td><td>&nbsp;</td>';
+			print '<td>&nbsp;</td>';
+			print '</tr>';
 		}
-		print "</table><br>";
 
 		print '</table></div><br>';
 		$db->free($resql);
@@ -474,7 +626,6 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 		dol_print_error($db);
 	}
 }
-
 
 
 // Last modified supplier invoices
@@ -572,7 +723,6 @@ if (! empty($conf->fournisseur->enabled) && $user->rights->fournisseur->facture-
 }
 
 
-
 // Last donations
 if (! empty($conf->don->enabled) && $user->rights->societe->lire)
 {
@@ -644,6 +794,7 @@ if (! empty($conf->don->enabled) && $user->rights->societe->lire)
 	}
 	else dol_print_error($db);
 }
+
 
 /**
  * Social contributions to pay
@@ -726,6 +877,7 @@ if (! empty($conf->tax->enabled) && $user->rights->tax->charges->lire)
 		}
 	}
 }
+
 
 /*
  * Customers orders to be billed
@@ -850,7 +1002,7 @@ if (! empty($conf->facture->enabled) && ! empty($conf->commande->enabled) && $us
 
 /*
  * Unpaid customers invoices
- */
+ *
 if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 {
 	$facstatic=new Facture($db);
@@ -985,6 +1137,7 @@ if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
 		dol_print_error($db);
 	}
 }
+*/
 
 /*
  * Unpayed supplier invoices
